@@ -155,16 +155,10 @@
     </div>
 
     <!-- SET ALL INSTRUCTION INFO BELOW -->
-    <div id="instructions">
+     <div id="instructions">
         <h3>General Info</h3>
-            <p>Current time: </p>
-            <p>Address of origin: </p>
-            <p>Address of destination: </p>
-            <p>Distance of destination: </p>
-            <p>Estimated travel time to destination: </p>
-            <p>State of charge of battery: </p>
-            <p>Range of current battery: </p>
     </div>
+
 
     <!-- Instructions div displaying general information about the trip -->
     <!--<div id="instructions">
@@ -616,6 +610,33 @@
                 console.log(`Updated station ${station.name} with distance ${station.originDistance} and ${station.destDistance}`);
             }
 
+        }
+
+        // Function to update route instructions based on the start and end points
+        async function updateRouteInstructions() {
+            const startPoint = {
+                lng: pointSource.data.features[0].geometry.coordinates[0],
+                lat: pointSource.data.features[0].geometry.coordinates[1]
+            };
+
+            const endPoint = {
+                lng: endpointsource.data.features[0].geometry.coordinates[0],
+                lat: endpointsource.data.features[0].geometry.coordinates[1]
+            };
+
+            const routeDetails = await getRouteDetails(startPoint, endPoint);
+
+            // Assuming you have elements with IDs or you can set them in your HTML
+            document.querySelector('#instructions').innerHTML = `
+                <h3>General Info</h3>
+                <p>Current time: </p>
+                <p>Address of origin: </p>
+                <p>Address of destination: </p>
+                <p>Distance of destination: ${routeDetails.distance.toFixed(2)} Miles</p>
+                <p>Estimated travel time to destination: ${routeDetails.time} Minutes</p>
+                <p>State of charge of battery: </p>
+                <p>Range of current battery: </p>
+            `;
         }
 
         // Function to add points of interest (POIs) to the map
