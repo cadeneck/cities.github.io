@@ -285,6 +285,39 @@
             emoji: '📍'
         };
 
+        let dataLog = [];
+
+        function logData(actionType, location, coordinates) {
+            const entry = {
+                timestamp: new Date().toISOString(),
+                actionType: actionType,
+                location: location,
+                coordinates: coordinates
+            };
+            dataLog.push(entry);
+            console.log("Data logged:", entry);
+        }
+
+        function downloadCSV(data) {
+            const csvRows = ["timestamp,actionType,location,coordinates"];
+            
+            for (const row of data) {
+                csvRows.push(`"${row.timestamp}","${row.actionType}","${row.location}","${row.coordinates}"`);
+            }
+
+            const csvString = csvRows.join('\n');
+            const blob = new Blob([csvString], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'logData.csv');
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+        }
+
+        /*
         // Function to log user actions in the log box
         function logAction(action) {
             const logBox = document.getElementById('log-box');
@@ -305,6 +338,7 @@
             document.body.removeChild(textarea);
             alert('Logs copied to clipboard');
         }
+            */
 
         // Add event listener to the copy button
         document.getElementById('copy-button').addEventListener('click', copyLogs);
