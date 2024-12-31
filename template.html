@@ -2,6 +2,7 @@
 <html lang='en'>
 
 <head>
+    <!-- Metadata of the map -->
     <meta charset='utf-8' />
     <title>SAI Sample Survey Map</title>
     <meta name='viewport' content='width=device-width, initial-scale=1' />
@@ -9,14 +10,17 @@
     <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.js'></script>
     <!-- Include Mapbox GL JS CSS -->
     <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v3.1.0/mapbox-gl.css' rel='stylesheet' />
+    <!-- Adding charging station icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
 
-        /* CSS styles for the body, map, manual, log-box, buttons, and markers */
+        /* CSS styles for the body, map, manual, log-box, buttons, and markers -- all front end display*/
         body {
             margin: 0;
             padding: 0;
         }
 
+        /* Style for the map container */
         #map {
             position: absolute;
             top: 0;
@@ -24,6 +28,7 @@
             width: 100%;
         }
 
+        /* Style for generate info popup box */
         #manual {
             position: absolute;
             left: 20px;
@@ -40,6 +45,7 @@
             display: none; /* Initially hidden */
         }
 
+        /* Style for the general info panel */
         #instructions {
             position: absolute;
             left: 30px;
@@ -56,6 +62,7 @@
             border: 1px solid #ccc;
         }
 
+        /* old depricated feature from log-box */
         #log-box {
             position: absolute;
             right: 20px;
@@ -63,28 +70,30 @@
             width: 20%;
             max-height: 30%;
             padding: 20px;
-            background-color: #fff;
+            background-color: #f1f0ef;
             overflow-y: auto;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             font-family: sans-serif;
-            border: 1px solid #ccc;
+            border: 1px solid #f1f0ef;
         }
 
+        /* Style for the charging station popup boxes */
         .info-box {
             position: absolute;
             width: 200px;
             max-height: 40%;
             padding: 20px;
-            background-color: #fff;
+            background-color: #ffffff;
             overflow-y: auto;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             font-family: sans-serif;
-            border: 1px solid #ccc;
+            border: 1px solid #f1f0ef;
             display: none; /* Initially hidden */
         }
 
+        /* Style for the charging station 1 */
         #top-right-info {
             top: 20px;
             right: 20px;
@@ -92,24 +101,26 @@
 
         }
 
+        /* Style for the charging station 2 */
         #bottom-left-info {
             bottom: 20px;
             right: 20px;
-            background-color: #a5a5a5;
+            background-color: #c8c8c8;
         }
 
+        /* Style for the charging station star - review stars */
         .stars {
             font-size: 26px; /* Adjust this value to make the stars larger */
             color: #0047AB	;     /* Optional: Change the color of the stars */
         }
 
-
-
+        /* old depricated feature from pre-info-box; still useful if a general popup is needed */
         .popup-content {
             max-height: 330px;
             overflow-y: auto;
         }
 
+        /* old depricated feature when emoji markers were used for POIs; still useful if a emojis markers are needed */
         .emoji-marker {
             display: flex;
             justify-content: center;
@@ -121,9 +132,11 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
+
+        /* depricated feature from log-box button */
         #copy-button {
             margin-top: 10px;
-            background-color: #bbb8b8;
+            background-color: #ffffff;
             color: black;
             border: none;
             padding: 8px 16px;
@@ -131,17 +144,19 @@
             cursor: pointer;
             font-size: 14px;
             transition: background-color 0.3s;
-            font-family: sans-serif;
+            font-family: cursive;
         }
 
+        /* depricated feature from log-box button */
         #copy-button:hover {
             background-color: #0056b3;
         }
 
+        /* Button formatting used across all panels and popups current */
         .popup-button, .instruction-button {
-            background-color: #dddddd;
+            background-color: #f1f0ef;
             color: black;
-            border: none;
+            border: 1px solid black;
             padding: 8px 16px;
             margin: 5px;
             border-radius: 5px;
@@ -151,6 +166,7 @@
             font-family: sans-serif;
         }
 
+        /* Button hover color */
         .popup-button:hover, .instruction-button:hover {
             background-color: #0056b3;
         }
@@ -188,12 +204,12 @@
         const map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/navigation-day-v1',
-            center: [ , ],
-            zoom: -1
+            center: [-157.88132425781222,21.33023123189352],
+            zoom: 12
         });
         const bounds = [
-            [ , ],
-            [ , ]
+            [-158.03132425781222,21.27023123189352],
+            [-157.73132425781222,21.40023123189352]
         ];
         map.setMaxBounds(bounds);
 
@@ -205,20 +221,20 @@
         let startPoint = null;
         let endPoint = null;
         let poiMarkers = [];
-        let mapNum = -1; // SET MAP NUMBER    
+        let mapNum = -1; // SET MAP NUMBER, unique identifier for each map
 
         // Function to add a marker at a specific point on the map
         const instructions = [
-            { title: "Current Time", info: "." }, 
-            { title: "Address of Origin", info: "." },
-            { title: "Address of Destination", info: "." },
-            { title: "Distance to Destination", info: " " },
-            { title: "Estimated Time to Destination", info: " " },
-            { title: "State of Charge of Battery", info: "." },
-            { title: "Range of Current Battery", info: "." },
-            { title: "Estimated Drive Distance with Current Charge", info: "." },
-            { title: "Type of Charging Socket", info: "." },
-            { title: "kWh Needed to Fully Charge Your Car", info: "." }
+            { title: "Current Time", info: "FILL." }, 
+            { title: "Address of Origin", info: "FILL." },
+            { title: "Address of Destination", info: "FILL." },
+            { title: "Distance to Destination", info: "WILL BE DYNAMICALLY FILLED" },
+            { title: "Estimated Time to Destination", info: "WILL BE DYNAMICALLY FILLED" },
+            { title: "State of Charge of Battery", info: "FILL." },
+            { title: "Range of Current Battery", info: "FILL." },
+            { title: "Estimated Drive Distance with Current Charge", info: "FILL." },
+            { title: "Type of Charging Socket", info: "FILL." },
+            { title: "kWh Needed to Fully Charge Your Car", info: "FILL." }
         ];
 
 
@@ -227,49 +243,54 @@
         const chargingStations = [
             {
                 coordinates: [ , ],
-                imageUrl: ' ',
-                name: ' ',
+                imageUrl: ' ', //Whatever the image is on plugshare or default no image picture
+                name: ' ', //Whatever the name is on plugshare for station
 
-                location: ' ',
-                originDistance: ' ',
-                originTime: ' ',
-                destDistance: '  ',
-                destTime: ' ',
+                location: ' ',  //Whatever the location is on plugshare
+                originDistance: 'WILL BE DYNAMICALLY FILLED',
+                originTime: ' WILL BE DYNAMICALLY FILLED',
+                destDistance: ' WILL BE DYNAMICALLY FILLED ',
+                destTime: ' WILL BE DYNAMICALLY FILLED',
 
+                // Just plyg type & respective numbers value (no formatting)
                 waitTime: [
-                        { type: 'J1772', value: ' ' }
+                        { type: ' ', value: ' ' } 
                     ],
                 plugNumb: [
-                        { type: 'J1772', value: ' ' }
+                        { type: ' ', value: '' }
                     ],    
                 chargeTime: [
-                        { type: 'J1772', value: ' ' }
+                        { type: ' ', value: ' ' }
                     ],
                 socketAvalability: [
-                        { type: 'J1772', value: ' ' }
+                        { type: ' ', value: ' ' }
                     ],
 
-                energySource: 'Y% grid, X% renewable',
-
-                chargingFee: '$ ',
-                chargingFeeRate: ' ',
-                parkingFee: '$ ',
-                parkingFeeRate: ' ',
-
-                coffee: 'X. <br><br> There is a coffee shop in walking distance Y miles away.',
-                grocery: 'X. <br><br> There is a grocery store in walking distance Y miles away.',
-                sportsClothes: 'X. <br><br> There is a sports or clothing store in walking distance Y miles away.',
                 
-                rating: '★ ✰',
-                ratingNum: ' ',
-                ratingExact: ' '
-            },
-            {
-                coordinates: [ , ],
-                imageUrl: '',
-                name: '',
+                energySource: 'XX% grid, XX% renewable',
 
-                location: '',
+                chargingFee: '$X.XX',
+                chargingFeeRate: 'per Y',
+                parkingFee: '$X.XX',
+                parkingFeeRate: 'for Y',
+
+                coffee: 'Yes/No. <br><br> There is a coffee shop in walking distance X.X miles away.',
+                grocery: 'Yes/No. <br><br> There is a grocery store in walking distance X.X miles away.',
+                sportsClothes: 'Yes/No. <br><br> There is a sports or clothing store in walking distance X.X miles away.',
+                
+                //The rating can be empty if there is no reviews
+                rating: '★ ✰',
+                ratingNum: 'X',
+                ratingExact: 'X.X'
+            },
+
+            // SET SECOND CHARGING STATION INFO example filled out below
+            {
+                coordinates: [-157.886713, 21.322051],
+                imageUrl: 'https://photos.plugshare.com/photos/892031.jpg',
+                name: 'Honolulu Exotics Luxury Car Rental & Auto Spa',
+
+                location: '1824 Auiki St, Honolulu, HI 96819, USA',
                 originDistance: ' Miles',
                 originTime: ' Minutes',
                 destDistance: ' Miles ',
@@ -277,42 +298,39 @@
 
                 
                 waitTime: [
-                        { type: 'J1772', value: ' ' },
-                        { type: 'NACS', value: ' ' }
+                        { type: 'J1772', value: '0' },
+                        { type: 'NACS', value: '0' }
                     ],
                 plugNumb: [
-                        { type: 'J1772', value: ' ' },
-                        { type: 'NACS', value: ' ' }
+                        { type: 'J1772', value: '1' },
+                        { type: 'NACS', value: '1' }
                     ],
                 chargeTime: [
-                        { type: 'J1772', value: ' ' },
-                        { type: 'NACS', value: ' ' }
+                        { type: 'J1772', value: '580' },
+                        { type: 'NACS', value: '180' }
                     ],
                 socketAvalability: [
-                        { type: 'J1772', value: ' ' },
-                        { type: 'NACS', value: ' ' }
+                        { type: 'J1772', value: '1' },
+                        { type: 'NACS', value: '1' }
                     ],        
 
-                energySource: 'Y% grid, X% renewable',
+                energySource: '95% grid, 5% renewable',
 
-                chargingFee: '$ ',
-                chargingFeeRate: '',
+                chargingFee: '$5.00',
+                chargingFeeRate: 'per hour',
 
-                parkingFee: '$',
-                parkingFeeRate: ' ',
+                parkingFee: '$0.00',
+                parkingFeeRate: 'for any amount of time',
 
-                coffee: 'X. <br><br> There is a coffee shop in walking distance Y miles away.',
-                grocery: 'X. <br><br> There is a grocery store in walking distance Y miles away.',
-                sportsClothes: 'X. <br><br> There is a sports or clothing store in walking distance Y miles away.',
+                coffee: 'Yes. <br><br> There is a coffee shop in walking distance 0.7 miles away.',
+                grocery: 'No. <br><br> There is no grocery store in walking distance.',
+                sportsClothes: 'Yes. <br><br> There is a sports or clothing store in walking distance 1.2 miles away.',
                 
-                rating: '★ ✰ ',
-                ratingNum: ' ',
-                ratingExact: ' '
+                rating: '',
+                ratingNum: '0',
+                ratingExact: '0.0'
             }
         ];
-
-
-        
 
         // Fixed points for emoji markers, charging stations, and POIs
         const fixedPoint1 = {
@@ -326,6 +344,8 @@
             emoji: '📍'
         };
 
+
+        // Old depricated CSV - locally logged data
          /*
         // Path to the CSV file
         const csvFilePath = 'logBox.csv';
@@ -388,6 +408,7 @@
         }
         */
 
+        // Function to get the user ID from the URL - Qualtrics ID randomly generated so we can track behaviors across users
         function getUserIdFromUrl() {
         const params = new URLSearchParams(window.location.search);
         return params.get('userID');
@@ -397,6 +418,13 @@
         const userId = getUserIdFromUrl();
         console.log('User Id:', userId);
 
+        // Modern log which pushes data to the server - local currently for testing sake but could change the fetch command to a live, centeral server
+        // Logs the action type (back button, opening button, map click, or charging station click)
+        // Logs the charging station name (if applicable - not possible for general info so left N/A)
+        // Button info - title of button or what type of back button was clicked
+        // Coordinates - where the action took place (only for map clicks)
+        // Map number - which map this took place on (data will have all maps so we can track user behavior across maps)
+        // UserID - found on the qualtrics page, setup there so we can track user behavior across users
         function logData(actionType, chargingStation, button, coordinates, map) {
 
             /*
@@ -450,7 +478,7 @@
         }
 
 
-        // Function to add an emoji marker at a specific point on the map
+        // depricated feature: Function to add an emoji marker at a specific point on the map 
         function addEmojiMarker(point) {
             if (window.emojiMarker) {
                 window.emojiMarker.remove();
@@ -469,7 +497,7 @@
             //logAction(`Emoji marker added at: ${point.lng}, ${point.lat}`);
         }
 
-        // Function to add an emoji marker with feedback at a specific point on the map
+        // depricated feature: Function to add an emoji marker with feedback at a specific point on the map
         function addEmojiMarkerWithFeedback(point, stationName, plugs, encodedImageUrl, buttonElement, poi_type) {
             const poi_emoji = poi_type === 'restaurant' ? '🍴' : '🛒';
             addPOIs(poi_type, '🍴', point.lat, point.lng, stationName);
@@ -493,30 +521,51 @@
             //logAction(`Nearby ${poi_type}s added for ${stationName}`);
         }
 
+        // Flag allows different colors for charging stations
         let flag = 1;
+
+        // Array to store existing markers for clearing later
+        let markers = [];
 
         // Function to add charging stations to the map
         function addChargingStations() {
             chargingStations.forEach(station => {
                 const el = document.createElement('div');
                 el.className = 'marker';
-                if (flag){
-                    el.innerHTML = '⚡';
-                    flag = 0;
-                } else {
-                    el.innerHTML = '🔌';
-                    flag = 1;
-                }
-                el.style.fontSize = '32px';
+                el.style.display = 'flex';
+                el.style.flexDirection = 'column';
+                el.style.alignItems = 'center';
 
-                new mapboxgl.Marker({ element: el })
+                // Create an icon element
+                const icon = document.createElement('i');
+                icon.className = 'fa-solid fa-charging-station';
+                icon.style.fontSize = '40px';  // Set icon size
+                icon.style.color = flag ? '#9B7A01' : '#303030'; // Toggle color
+                flag = !flag;
+                el.appendChild(icon);
+
+                // Create a label element for the charging station name
+                const label = document.createElement('div');
+                label.innerText = station.name; // Ensure each station has a `name` property
+                label.style.fontSize = '14px';
+                label.style.color = '#ffffff';
+                label.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                label.style.padding = '4px 8px';
+                label.style.borderRadius = '4px';
+                label.style.marginTop = '4px'; // Space between icon and label
+                label.style.textAlign = 'center';
+
+                // Append label below the icon
+                el.appendChild(label);
+
+                // Add marker to the map with icon centered on the location
+                new mapboxgl.Marker({ element: el, anchor: 'center' })
                     .setLngLat(station.coordinates)
                     .addTo(map);
             });
         }
-    
 
-        // Function to generate popup content for charging stations
+        // This function single handedly generates the content for the charging station popups & their formatting
         function generateBoxContent(station, boxId) {
             const encodedImageUrl = encodeURIComponent(station.imageUrl);
 
@@ -542,8 +591,8 @@
                     <button class="popup-button" onclick="showMoreInfo('${station.name}', 'chargeTime', '<b>Charge time:</b><br>${chargeTimeDetails}', '${boxId}')">Charge Time</button>
                     
                     <button class="popup-button" onclick="showMoreInfo('${station.name}', 'energySource', '<b>Energy source at station:</b><br>${station.energySource}.', '${boxId}')">Energy Source at Station</button>
-                    <button class="popup-button" onclick="showMoreInfo('${station.name}', 'fees', '<b>Cost to charge:</b> ${station.chargingFee.toLowerCase()}. <br><br> The price ${station.chargingFeeRate} is ${station.chargingFee.toLowerCase()}.', '${boxId}')">Cost to Charge</button>
-                    <button class="popup-button" onclick="showMoreInfo('${station.name}', 'parking', '<b>Cost to park at station:</b> ${station.parkingFee.toLowerCase()}. <br><br> The price of parking your car at the charging station ${station.parkingFeeRate} is ${station.parkingFee.toLowerCase()}.', '${boxId}')">Cost to Park at Station</button>
+                    <button class="popup-button" onclick="showMoreInfo('${station.name}', 'fees', '<b>Cost to charge:</b> ${station.chargingFee}. <br><br> The price ${station.chargingFeeRate} is ${station.chargingFee.toLowerCase()}.', '${boxId}')">Cost to Charge</button>
+                    <button class="popup-button" onclick="showMoreInfo('${station.name}', 'parking', '<b>Cost to park at station:</b> ${station.parkingFee}. <br><br> The price of parking your car at the charging station ${station.parkingFeeRate} is ${station.parkingFee.toLowerCase()}.', '${boxId}')">Cost to Park at Station</button>
                     <button class="popup-button" onclick="showMoreInfo('${station.name}', 'coffee', '<b>Coffee shop:</b> ${station.coffee}', '${boxId}')">Coffee Shop</button>
                     <button class="popup-button" onclick="showMoreInfo('${station.name}', 'grocery', '<b>Grocery store:</b> ${station.grocery}', '${boxId}')">Grocery Store</button>
                     <button class="popup-button" onclick="showMoreInfo('${station.name}', 'sportsClothes', '<b>Sports/Clothing store:</b> ${station.sportsClothes}', '${boxId}')">Sport/Clothing Store</button>
@@ -551,7 +600,7 @@
                 `;
         }
 
-        // Function to clear the info boxes
+        // depricated: Function to clear the info boxes
         /*
         function clearInfoBoxes() {
             const infoBoxes = document.querySelectorAll('.info-box');
@@ -563,6 +612,8 @@
         }
             */
 
+        // Since we have two info boxes, we need to clear them individually
+        // This happens when a area is clicked outside of the current station popup to close all popups
         function clearInfoBoxes(boxId = null) {
             const infoBoxes = document.querySelectorAll('.info-box');
             infoBoxes.forEach(box => {
@@ -576,7 +627,8 @@
 
 
 
-        // Function to update the info boxes with charging station data
+        // Function to update each specific info box with their respective charging station data
+        // (using the generateBoxContent, showMoreInfo, and restoreOriginalContent functions)
         function updateInfoBox(station, boxId) {
             const infoBox = document.getElementById(boxId);
             infoBox.innerHTML = generateBoxContent(station, boxId);
@@ -586,8 +638,9 @@
         
 
         // Function to show more information about a charging station
+        // This function generates the following popup populated with the respective info based on which button is clicked within a charging station
         function showMoreInfo(stationName, infoType, infoContent, boxId) {
-            logData(`Button Clicked`, `${stationName}`, `${infoType}`, null, mapNum);
+            logData(`Button Clicked`, `${stationName}`, `${infoType}`, null, mapNum); // Log the charging station button click event
 
             const station = chargingStations.find(station => station.name === stationName);
             content = `<p style="font-size: 16px; padding: 5px;">${infoContent}</p>`;
@@ -608,14 +661,15 @@
         }
 
         // Function to restore the original content of the info box
+        // Returns from the showMoreInfo function to the original content (generateBoxContent - or the main landing page for each station)
         function restoreOriginalContent(stationName, infoType, boxId) {
             const station = chargingStations.find(station => station.name === stationName);
             const infoBox = document.getElementById(boxId);
             infoBox.innerHTML = generateBoxContent(station, boxId);
-            logData(`Back Button Clicked`, `${stationName}`, `${infoType}`, null, mapNum);
+            logData(`Back Button Clicked`, `${stationName}`, `${infoType}`, null, mapNum); // Log the charging station popup back button click event
         }
 
-        // Function to create instruction buttons
+        // This function creates the buttons for the general information panel
         function createInstructionButtons() {
             const instructionsDiv = document.getElementById('instructions');
             
@@ -632,10 +686,10 @@
             });
         }
 
-        // Function to show instruction information using the Map Guide popup
+        // Function to populates the a popup pannel based on the button clicked in the general information panel
         function showInstructionInfo(index) {
             const instruction = instructions[index];
-            logData(`Button Clicked`, null, `${instruction.title}`,  null, mapNum);
+            logData(`Button Clicked`, null, `${instruction.title}`,  null, mapNum); // Log the instruction button click event
 
             const content = `<p style="font-size: 16px; padding: 5px;">${instruction.info}</p>`;
 
@@ -650,9 +704,9 @@
             }
         }
 
-        // Function to handle the back button click in the Map Guide popup
+        // Function to handle the back button click in the Map Guide popup (closes popup using restoreMapGuide function)
         function handleBackButtonClick(title) {
-            logData(`Back Button Clicked`, null, `${title}`,  null, mapNum);
+            logData(`Back Button Clicked`, null, `${title}`,  null, mapNum); // Log the general info popup back button click event
             restoreMapGuide();
         }
 
@@ -669,6 +723,8 @@
         createInstructionButtons();
 
         // Function to get the time to travel between two points
+        // Leverages existing Mapbox Directions API to determine validity of route & caluclate distance/time in desired format
+        // Allows you to just pass in the start and end points to get the time and distance
         async function getRouteDetails(startPoint, endPoint) {
             if (!startPoint || !endPoint) return null;
 
@@ -690,6 +746,7 @@
         }
       
         // Function to get the time to travel between two points
+        // Uses the getRouteDetails function to get the time and distance/time variables and updates the charging station variables
         async function updateChargingStationDetails() {
             // Extract startPoint and endPoint from the source data
             const startPoint = {
@@ -720,7 +777,7 @@
         }
 
 
-        // Function to update route instructions based on the start and end points
+        // Function to update route instructions distance/time dynamically based on the start and end points
         async function updateAndDisplayRouteInstructions() {
             const startPoint = {
                 lng: pointSource.data.features[0].geometry.coordinates[0],
@@ -739,12 +796,15 @@
         }
 
         // Function to update instructions with route details
+        // Helper function that actually updates the varaibles in the instructions array
         function updateInstructions(routeDetails) {
             instructions[3].info = `${routeDetails.distance.toFixed(2)} miles.`;
             instructions[4].info = `${routeDetails.time} minutes.`;
         }
 
         // Function to get the route to travel between any route type
+        // Always displaying a route but depends if its default start to end route display or to a given charging station
+        // This ensures no matter what the route is always displayed, none overlap, and all are cleared when a new route is selected
         async function getRoute(routeType) {
             console.log(`Get route for type ${routeType}`);
 
@@ -762,7 +822,7 @@
 
             switch (routeType) {
                 case 1:
-                    // Use the first charging station for case 2
+                    // Use the first charging station for case 1
                     midPoint = {
                         lng: chargingStations[0].coordinates[0],
                         lat: chargingStations[0].coordinates[1]
@@ -771,7 +831,7 @@
                     await fetchAndDisplayRoute(midPoint, endPoint, '#FFDF00');  // Fetch route from charging station to end
                     break;
                 case 2:
-                    // Use the second charging station for case 3
+                    // Use the second charging station for case 2
                     midPoint = {
                         lng: chargingStations[1].coordinates[0],
                         lat: chargingStations[1].coordinates[1]
@@ -788,6 +848,7 @@
 
     
         // Function to fetch and display a route between two points
+        // Can choose even the color of the route line with the third passed variable + handles all the API display
         async function fetchAndDisplayRoute(start, end, color) {
             console.log(`Fetching route from ${start.lng},${start.lat} to ${end.lng},${end.lat}`);
 
@@ -834,6 +895,7 @@
         }
 
         // Function to remove all route layers from the map
+        // This function is called when a new route is selected to ensure no overlapping routes
         function removeRoutes() {
             // This function will need to remove any route layers added to the map
             // Example:
@@ -845,7 +907,7 @@
             });
         }
 
-        // Function to add points of interest (POIs) to the map
+        // depricated: Function to add points of interest (POIs) to the map
         async function addPOIs(searchTerm, emoji, latitude, longitude, station_name) {
             //logAction(`Adding POIs for ${station_name} - ${searchTerm}`);
 
@@ -893,13 +955,14 @@
                         },
                         geometry: {
                             type: 'Point',
-                            coordinates: [ , ]
+                            coordinates: [XX.XXXXXX,XX.XXXXXX]
                         }
                     }
                 ]
             }
         };
 
+        //Having a filled example below for the start and end points
         const endpointsource = {
             type: 'geojson',
             data: {
@@ -912,7 +975,7 @@
                         },
                         geometry: {
                             type: 'Point',
-                            coordinates: [ , ]
+                            coordinates: [-157.88242783693676,21.306019426515576]
                         }
                     }
                 ]
@@ -920,6 +983,7 @@
         };
 
         // Add route time/distance to instructions & update charging station details
+        // Route zero is default start to end route
         map.on('load', async () => {
             await getRoute(0); // Ensure this is awaited properly
             await updateAndDisplayRouteInstructions();  // Ensure this is awaited properly
@@ -932,11 +996,15 @@
             // Event listener for map clicks
             map.on('click', (event) => {
                 const clickCoords = [event.lngLat.lng, event.lngLat.lat];
-                logData(`Map Clicked`, null, null, clickCoords, mapNum);
+                logData(`Map Clicked`, null, null, clickCoords, mapNum); // Log the map click event anywhere
                 console.log(`Map clicked at: ${clickCoords}`);
 
-                const bufferRadius = 0.8; // Buffer radius in kilometers
+                // Buffer radius for charging stations so popup & route is only shown when clicked within the buffer zone
+                // Could be changed with the most recent addition the new charging station graphic but for now set manually based on each maps needs
+                const bufferRadius = X.X; // Buffer radius must be uniquley set for each charging station
 
+                // Check if the click is within the buffer zone of a charging station
+                // If not, remove existing routes and display the default route
                 if(!checkBufferZone(clickCoords, chargingStations[0].coordinates, bufferRadius) && !checkBufferZone(clickCoords, chargingStations[1].coordinates, bufferRadius)) {
                     removeRoutes();
                     getRoute(0);
@@ -944,6 +1012,8 @@
                     console.log('Current route type set to 0');
                 }
 
+                // Check if the click is within the buffer zone of a charging station
+                // If so remove existing routes, display the route to the selected station, and update the info box (popup)
                 chargingStations.forEach(station => {
                     if (checkBufferZone(clickCoords, station.coordinates, bufferRadius)) {
                         removeRoutes();
@@ -958,7 +1028,7 @@
                         // Update the relevant info box based on the station's index
                         updateInfoBox(station, currentBoxId);
 
-                        logData(`Station Opened`, station.name, null, station.coordinates, mapNum);
+                        logData(`Station Opened`, station.name, null, station.coordinates, mapNum); // Log the charging station popup open event (event clicked)
                         console.log(`Clicked within buffer zone of ${station.name}`);
                     }
                 });
